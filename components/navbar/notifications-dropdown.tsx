@@ -18,7 +18,9 @@ export const NotificationsDropdown = () => {
         </NavbarItem>
       </DropdownTrigger>
       <DropdownMenu className="w-80" aria-label="Avatar Actions">
-        <DropdownSection title="Notificacions"></DropdownSection>
+        <DropdownSection title="Notificacions">
+          <DropdownItem key="notification1">No new notifications</DropdownItem>
+        </DropdownSection>
       </DropdownMenu>
     </Dropdown>
   );
