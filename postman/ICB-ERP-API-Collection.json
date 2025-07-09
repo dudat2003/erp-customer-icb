@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "ICB ERP API Collection",
+    "description": "API collection for ICB ERP Customer and Template Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "icb-erp-api-collection",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "item": [
+    {
+      "name": "Customers API",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name, code, or email",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Filter by category: potential|closed|regular|promising",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieve paginated list of customers with optional search and filter"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Customers with Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers?search=ABC&category=closed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ABC",
+                  "description": "Search for 'ABC' in name, code, email"
+                },
+                {
+                  "key": "category",
+                  "value": "closed",
+                  "description": "Filter by 'closed' category"
+                }
+              ]
+            },
+            "description": "Example with search and filter parameters"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerCode\": \"KH006\",\n  \"name\": \"Công ty Test Postman\",\n  \"taxCode\": \"0123456789\",\n  \"businessLicenseDate\": \"2024-01-01\",\n  \"representative\": \"Nguyễn Test\",\n  \"position\": \"Giám đốc\",\n  \"email\": \"test@postman.com\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 Test Street, Test City\",\n  \"category\": \"potential\",\n  \"assignedTo\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Create a new customer with all required fields"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "1"]
+            },
+            "description": "Retrieve a specific customer by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Công ty TNHH ABC - Updated\",\n  \"email\": \"updated@abc.com\",\n  \"category\": \"promising\",\n  \"phone\": \"0987654321\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "1"]
+            },
+            "description": "Update an existing customer (partial update allowed)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "1"]
+            },
+            "description": "Delete a customer by ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "All customer-related API endpoints"
+    },
+    {
+      "name": "Templates API",
+      "item": [
+        {
+          "name": "Get All Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates"]
+            },
+            "description": "Retrieve all available templates"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Template Test Postman\",\n  \"fileName\": \"test-template.docx\",\n  \"placeholders\": [\n    \"{Tên khách hàng}\",\n    \"{Mã khách hàng}\",\n    \"{Email}\",\n    \"{Số điện thoại}\"\n  ],\n  \"content\": \"TEMPLATE TEST\\n\\nTên khách hàng: {Tên khách hàng}\\nMã khách hàng: {Mã khách hàng}\\nEmail: {Email}\\nSố điện thoại: {Số điện thoại}\\n\\nNội dung template...\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates"]
+            },
+            "description": "Create a new template with placeholders"
+          },
+          "response": []
+        }
+      ],
+      "description": "All template-related API endpoints"
+    },
+    {
+      "name": "Staff API",
+      "item": [
+        {
+          "name": "Get All Staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staff"]
+            },
+            "description": "Retrieve all staff members for dropdown lists"
+          },
+          "response": []
+        }
+      ],
+      "description": "Staff-related API endpoints"
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Test Duplicate Customer Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerCode\": \"KH001\",\n  \"name\": \"Duplicate Code Test\",\n  \"taxCode\": \"9999999999\",\n  \"businessLicenseDate\": \"2024-01-01\",\n  \"representative\": \"Test User\",\n  \"position\": \"Test Position\",\n  \"email\": \"duplicate@test.com\",\n  \"phone\": \"0999999999\",\n  \"address\": \"Test Address\",\n  \"category\": \"potential\",\n  \"assignedTo\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "Test creating customer with existing customer code (should return 400 error)"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Customer Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "999"]
+            },
+            "description": "Test getting non-existent customer (should return 404 error)"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Duplicate Template Name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Biểu mẫu đánh giá sơ bộ\",\n  \"fileName\": \"duplicate-test.docx\",\n  \"placeholders\": [\"{Test}\"],\n  \"content\": \"Duplicate template test\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates"]
+            },
+            "description": "Test creating template with existing name (should return 400 error)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test error scenarios and edge cases"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set timestamp for unique data",
+          "pm.globals.set(\"timestamp\", Date.now());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the ICB ERP API"
+    }
+  ]
+}

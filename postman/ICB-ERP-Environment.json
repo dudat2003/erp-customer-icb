@@ -1,0 +1,19 @@
+{
+  "id": "icb-erp-environment",
+  "name": "ICB ERP - Development",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Development server URL",
+      "enabled": true
+    },
+    {
+      "key": "apiVersion",
+      "value": "v1",
+      "description": "API version",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
