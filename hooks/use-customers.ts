@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import { CreateCustomerRequest, UpdateCustomerRequest } from "@/types";
-import { message } from "antd";
 
 // Query keys
 export const customerKeys = {
@@ -44,11 +43,8 @@ export function useCreateCustomer() {
     mutationFn: (data: CreateCustomerRequest) => apiClient.createCustomer(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      message.success("Tạo khách hàng thành công");
     },
-    onError: (error: Error) => {
-      message.error(error.message || "Tạo khách hàng thất bại");
-    },
+    onError: (error: Error) => {},
   });
 }
 
@@ -65,11 +61,8 @@ export function useUpdateCustomer() {
         customerKeys.detail(updatedCustomer.id),
         updatedCustomer
       );
-      message.success("Cập nhật khách hàng thành công");
     },
-    onError: (error: Error) => {
-      message.error(error.message || "Cập nhật khách hàng thất bại");
-    },
+    onError: (error: Error) => {},
   });
 }
 
@@ -81,10 +74,7 @@ export function useDeleteCustomer() {
     mutationFn: (id: string) => apiClient.deleteCustomer(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      message.success("Xóa khách hàng thành công");
     },
-    onError: (error: Error) => {
-      message.error(error.message || "Xóa khách hàng thất bại");
-    },
+    onError: (error: Error) => {},
   });
 }

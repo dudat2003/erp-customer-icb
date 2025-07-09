@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const template = mockData.templates.find((t) => t.id === id);
+    const template = mockData.getTemplates().find((t) => t.id === id);
 
     if (!template) {
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const templateIndex = mockData.templates.findIndex((t) => t.id === id);
+    const templateIndex = mockData.getTemplates().findIndex((t) => t.id === id);
 
     if (templateIndex === -1) {
       return NextResponse.json(
@@ -37,7 +37,7 @@ export async function DELETE(
       );
     }
 
-    mockData.templates.splice(templateIndex, 1);
+    mockData.getTemplates().splice(templateIndex, 1);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });

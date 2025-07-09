@@ -40,8 +40,7 @@ export async function PUT(
     const { id } = await params;
     const body: UpdateCustomerRequest = await request.json();
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => resolve);
 
     const customers = mockData.getCustomers();
     const existingCustomer = customers.find((c: Customer) => c.id === id);
@@ -84,8 +83,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => resolve);
 
     const success = mockData.deleteCustomer(id);
 

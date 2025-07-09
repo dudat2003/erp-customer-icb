@@ -1,5 +1,5 @@
-import { Image } from "@nextui-org/react";
-import { Divider } from "@nextui-org/divider";
+import { Image } from "@heroui/react";
+import { Divider } from "@heroui/divider";
 
 interface Props {
   children: React.ReactNode;
@@ -33,12 +33,11 @@ export const AuthLayoutWrapper = ({ children }: Props) => {
         </div>
 
         <div className='z-10'>
-          <h1 className='font-bold text-[45px]'>NextUI Dashboard Template</h1>
+          <h1 className='font-bold text-[45px]'>ICB ERP System</h1>
           <div className='font-light text-slate-400 mt-4'>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quasi
-            possimus voluptate, sapiente assumenda deserunt repellendus,
-            perferendis odit voluptas hic dolores laborum fugit ut? Architecto
-            quo ex quidem vitae quae rem.
+            Hệ thống quản lý khách hàng và biểu mẫu chứng nhận của ICB.
+            Số hóa quy trình làm việc, nâng cao hiệu suất và tự động hóa
+            các biểu mẫu đánh giá dịch vụ chứng nhận.
           </div>
         </div>
       </div>

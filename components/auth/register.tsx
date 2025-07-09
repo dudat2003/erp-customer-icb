@@ -3,7 +3,7 @@
 import { createAuthCookie } from "@/actions/auth.action";
 import { RegisterSchema } from "@/helpers/schemas";
 import { RegisterFormType } from "@/helpers/types";
-import { Button, Input } from "@nextui-org/react";
+import { Button, Input } from "@heroui/react";
 import { Formik } from "formik";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,7 +31,9 @@ export const Register = () => {
 
   return (
     <>
-      <div className="text-center text-[25px] font-bold mb-6">Register</div>
+      <div className="text-center text-[25px] font-bold mb-6">
+        Đăng ký tài khoản
+      </div>
 
       <Formik
         initialValues={initialValues}
@@ -43,7 +45,7 @@ export const Register = () => {
             <div className="flex flex-col w-1/2 gap-4 mb-4">
               <Input
                 variant="bordered"
-                label="Name"
+                label="Họ và tên"
                 value={values.name}
                 isInvalid={!!errors.name && !!touched.name}
                 errorMessage={errors.name}
@@ -60,7 +62,7 @@ export const Register = () => {
               />
               <Input
                 variant="bordered"
-                label="Password"
+                label="Mật khẩu"
                 type="password"
                 value={values.password}
                 isInvalid={!!errors.password && !!touched.password}
@@ -69,7 +71,7 @@ export const Register = () => {
               />
               <Input
                 variant="bordered"
-                label="Confirm password"
+                label="Xác nhận mật khẩu"
                 type="password"
                 value={values.confirmPassword}
                 isInvalid={
@@ -85,16 +87,16 @@ export const Register = () => {
               variant="flat"
               color="primary"
             >
-              Register
+              Đăng ký
             </Button>
           </>
         )}
       </Formik>
 
       <div className="font-light text-slate-400 mt-4 text-sm">
-        Already have an account ?{" "}
+        Đã có tài khoản?{" "}
         <Link href="/login" className="font-bold">
-          Login here
+          Đăng nhập tại đây
         </Link>
       </div>
     </>

@@ -94,3 +94,54 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// PUT /api/customers/[id]
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body: Partial<Customer> = await request.json();
+
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const customers = mockData.getCustomers();
+    const existingCustomer = customers.find((c: Customer) => c.id === id);
+
+    if (!existingCustomer) {
+      return NextResponse.json(
+        { error: "Customer not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if customer code already exists (if updating)
+    if (body.customerCode) {
+      const duplicateCustomer = customers.find(
+        (c: Customer) => c.customerCode === body.customerCode && c.id !== id
+      );
+      if (duplicateCustomer) {
+        return NextResponse.json(
+          { error: "Customer code already exists" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const updatedCustomer = {
+      ...existingCustomer,
+      ...body,
+      updatedAt: new Date().toISOString(),
+    };
+    mockData.updateCustomer(id, updatedCustomer);
+
+    return NextResponse.json(updatedCustomer);
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to update customer" },
+      { status: 500 }
+    );
+  }
+}
