@@ -1,6 +1,6 @@
 import React from "react";
 import Chart, { Props } from "react-apexcharts";
-import { useCustomers } from "@/hooks/use-customers";
+import { useCustomers } from "@/hooks/use-customers-ls";
 
 export const Steam = () => {
   // Fetch data for different customer categories

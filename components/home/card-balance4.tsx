@@ -1,11 +1,11 @@
 import { Card, CardBody, Spinner } from "@heroui/react";
 import React from "react";
-import { useTemplates } from "@/hooks/use-templates";
+import { useTemplates } from "@/hooks/use-templates-ls";
 import { FileIcon } from "@/components/icons/table/file-icon";
 
 export const CardBalance4 = () => {
   const { data: templatesData, isLoading } = useTemplates();
-  const templates = templatesData || [];
+  const templates = templatesData?.data || [];
   const totalTemplates = templates.length;
 
   return (

@@ -27,7 +27,7 @@ import { TemplatesIcon } from "@/components/icons/sidebar/templates-icon";
 import { UploadIcon } from "@/components/icons/templates/upload-icon";
 import { EyeIcon } from "@/components/icons/table/eye-icon";
 import { DeleteIcon } from "@/components/icons/table/delete-icon";
-import { useTemplates, useDeleteTemplate } from "@/hooks/use-templates";
+import { useTemplates, useDeleteTemplate } from "@/hooks/use-templates-ls";
 import { Template } from "@/types";
 import { UploadTemplateModal } from "@/components/templates/upload-template-modal";
 import { TemplateDetailModal } from "@/components/templates/template-detail-modal";
@@ -164,7 +164,7 @@ export const Templates = () => {
     }
   };
 
-  const templateList = templates || [];
+  const templateList = templates?.data || [];
 
   return (
     <div className="my-10 px-4 lg:px-6 max-w-[95rem] mx-auto w-full flex flex-col gap-4">
