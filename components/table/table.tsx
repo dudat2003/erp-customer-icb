@@ -23,7 +23,7 @@ import {
   Image,
 } from "@heroui/react";
 import React, { useState, useRef } from "react";
-import { useCustomers } from "@/hooks/use-customers";
+import { useCustomers } from "@/hooks/use-customers-ls";
 import { useStaff } from "@/hooks/use-staff";
 import { Customer, CUSTOMER_CATEGORIES } from "@/types";
 import { apiClient } from "@/lib/api/client";

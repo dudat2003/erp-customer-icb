@@ -1,6 +1,6 @@
 import { Avatar, Card, CardBody } from "@heroui/react";
 import React from "react";
-import { useCustomers } from "@/hooks/use-customers";
+import { useCustomers } from "@/hooks/use-customers-ls";
 import { Customer } from "@/types";
 
 export const CardTransactions = () => {

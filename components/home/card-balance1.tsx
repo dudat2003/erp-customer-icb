@@ -1,7 +1,7 @@
 import { Card, CardBody, Spinner } from "@heroui/react";
 import React from "react";
 import { Community } from "../icons/community";
-import { useCustomers } from "@/hooks/use-customers";
+import { useCustomers } from "@/hooks/use-customers-ls";
 
 export const CardBalance1 = () => {
   const { data: customersData, isLoading } = useCustomers({

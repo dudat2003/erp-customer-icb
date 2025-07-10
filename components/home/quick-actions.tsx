@@ -1,14 +1,18 @@
+
 import { Button, Tooltip } from "@heroui/react";
 import { UploadIcon } from "../icons/templates/upload-icon";
 import { useRouter } from "next/navigation";
 import { CustomerFormModal } from "@/components/accounts/customer-form-modal";
+import { UploadTemplateModal } from "@/components/templates/upload-template-modal";
+import { useState } from "react";
+
 
 export const QuickActions = () => {
   const router = useRouter();
+  const [isUploadModalOpen, setUploadModalOpen] = useState(false);
 
   const handleUploadTemplate = () => {
-    // TODO: Open upload template modal or navigate to template page
-    console.log("Upload template clicked");
+    setUploadModalOpen(true);
   };
 
   return (
@@ -51,6 +55,11 @@ export const QuickActions = () => {
           </div>
         </div>
       </div>
+      <UploadTemplateModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onSuccess={() => setUploadModalOpen(false)}
+      />
     </div>
   );
 };

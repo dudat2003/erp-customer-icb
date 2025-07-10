@@ -16,9 +16,10 @@ import {
 import { useState, forwardRef, useImperativeHandle } from "react";
 import { Customer, CUSTOMER_CATEGORIES } from "@/types";
 import { useStaff } from "@/hooks/use-staff";
-import { useTemplates } from "@/hooks/use-templates";
+import { useTemplates } from "@/hooks/use-templates-ls";
 import { DownloadIcon } from "@/components/icons/templates/download-icon";
 import { PrintIcon } from "@/components/icons/templates/print-icon";
+import { saveAs } from "file-saver";
 
 interface CustomerDetailModalProps {
   onEdit?: (customer: Customer) => void;
@@ -48,33 +49,162 @@ export const CustomerDetailModal = forwardRef<any, CustomerDetailModalProps>(
     // Lấy danh sách template thật
     const { data: templates, isLoading: isLoadingTemplates } = useTemplates();
 
+    // Fill dữ liệu customer vào template
+    const fillTemplateData = (template: any) => {
+      if (!customer) return template.content;
 
-    // Tải file txt đã fill thông tin customer
+      let filledContent = template.content;
+
+      // Mapping dữ liệu customer với placeholder
+      const dataMapping = {
+        "{Tên khách hàng}": customer.name || "",
+        "{Mã khách hàng}": customer.customerCode || "",
+        "{Mã số thuế}": customer.taxCode || "",
+        "{Ngày cấp GĐKKD}": customer.businessLicenseDate
+          ? new Date(customer.businessLicenseDate).toLocaleDateString("vi-VN")
+          : "",
+        "{Người đại diện}": customer.representative || "",
+        "{Chức vụ}": customer.position || "",
+        "{Email}": customer.email || "",
+        "{Số điện thoại}": customer.phone || "",
+        "{Địa chỉ}": customer.address || "",
+        "{Ngày tạo hợp đồng}": new Date().toLocaleDateString("vi-VN"),
+        "{Mã hợp đồng}": `HD-${customer.customerCode}-${Date.now()
+          .toString()
+          .slice(-6)}`,
+      };
+
+      // Thay thế các placeholder bằng dữ liệu thực
+      Object.entries(dataMapping).forEach(([placeholder, value]) => {
+        filledContent = filledContent.replace(
+          new RegExp(placeholder, "g"),
+          value
+        );
+      });
+
+      return filledContent;
+    };
+
+    // Tải file .docx thật từ HTML template đã fill thông tin customer
     const handleDownloadTemplate = async (template: any) => {
       if (!customer) return;
+
       try {
-        const res = await fetch(`/api/templates/${template.id}/fill?customerId=${customer.id}&download=1`);
-        if (!res.ok) {
-          alert("Không thể tải file biểu mẫu");
-          return;
+        const filledContent = fillTemplateData(template);
+
+        // Tạo HTML với style cơ bản
+        const htmlContent = `
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>${template.name} - ${customer.name}</title>
+              <style>
+                body { 
+                  font-family: 'Times New Roman', serif; 
+                  margin: 40px; 
+                  line-height: 1.6; 
+                  font-size: 12pt;
+                }
+                h1 { 
+                  color: #333; 
+                  font-size: 16pt; 
+                  margin-bottom: 20px;
+                  text-align: center;
+                }
+                p { 
+                  margin: 10px 0; 
+                  text-align: justify;
+                }
+                .content {
+                  white-space: pre-wrap;
+                }
+              </style>
+            </head>
+            <body>
+              <h1>${template.name}</h1>
+              <div class="content">${filledContent}</div>
+            </body>
+          </html>
+        `;
+
+        // Gọi API để chuyển HTML sang DOCX
+        const fileName = `${template.fileName.replace(".docx", "")}_${
+          customer.customerCode
+        }_filled.docx`;
+
+        const response = await fetch("/api/templates/generate-docx", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            htmlContent,
+            fileName,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to generate DOCX");
         }
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${template.name.replace(/\.docx$/i, "")}-${customer.name}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } catch (e) {
-        alert("Có lỗi khi tải file");
+
+        const docxBlob = await response.blob();
+        saveAs(docxBlob, fileName);
+      } catch (error) {
+        console.error("Lỗi khi tạo file .docx:", error);
+        // Fallback về text file nếu có lỗi
+        const filledContent = fillTemplateData(template);
+        const blob = new Blob([filledContent], {
+          type: "text/plain;charset=utf-8",
+        });
+        const fileName = `${template.fileName.replace(".docx", "")}_${
+          customer.customerCode
+        }_filled.txt`;
+        saveAs(blob, fileName);
       }
     };
 
     const handlePrintTemplate = (template: any) => {
-      console.log("Print template:", template);
-      // TODO: Implement print functionality
+      if (!customer) return;
+
+      const filledContent = fillTemplateData(template);
+
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>${template.name} - ${customer.name}</title>
+              <style>
+                body { 
+                  font-family: 'Times New Roman', serif; 
+                  margin: 40px; 
+                  line-height: 1.6; 
+                  font-size: 12pt;
+                }
+                h1 { 
+                  color: #333; 
+                  font-size: 16pt; 
+                  margin-bottom: 20px;
+                  text-align: center;
+                }
+                p { 
+                  margin: 10px 0; 
+                  text-align: justify;
+                }
+                .content {
+                  white-space: pre-wrap;
+                }
+              </style>
+            </head>
+            <body>
+              <h1>${template.name}</h1>
+              <div class="content">${filledContent}</div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
     };
 
     const handleEditCustomer = () => {
@@ -263,41 +393,65 @@ export const CustomerDetailModal = forwardRef<any, CustomerDetailModalProps>(
                   <Card className="shadow-sm">
                     <CardHeader className="pb-3">
                       <h4 className="font-semibold text-blue-600">
-                        Danh sách biểu mẫu {isLoadingTemplates ? '' : `(${templates?.length || 0})`}
+                        Danh sách biểu mẫu{" "}
+                        {isLoadingTemplates
+                          ? ""
+                          : `(${templates?.data?.length || 0})`}
                       </h4>
                     </CardHeader>
                     <CardBody>
                       <div className="space-y-3">
                         {isLoadingTemplates ? (
-                          <div className="text-center py-8 text-default-500">Đang tải...</div>
-                        ) : templates && templates.length > 0 ? (
-                          templates.map((template) => (
+                          <div className="text-center py-8 text-default-500">
+                            Đang tải...
+                          </div>
+                        ) : templates && templates?.data?.length > 0 ? (
+                          templates.data.map((template) => (
                             <div
                               key={template.id}
                               className="flex items-center justify-between p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                  <span className="text-blue-600 font-semibold text-sm">DOC</span>
+                                  <span className="text-blue-600 font-semibold text-sm">
+                                    DOC
+                                  </span>
                                 </div>
                                 <div>
-                                  <p className="font-medium text-sm">{template.name}</p>
+                                  <p className="font-medium text-sm">
+                                    {template.name}
+                                  </p>
                                   <p className="text-xs text-default-500">
-                                    {template.fileName} • {new Date(template.createdAt).toLocaleDateString("vi-VN")}
+                                    {template.fileName} •{" "}
+                                    {new Date(
+                                      template.createdAt
+                                    ).toLocaleDateString("vi-VN")}
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Button
-                                  size="sm"
-                                  variant="light"
-                                  color="primary"
                                   isIconOnly
-                                  onPress={() => handleDownloadTemplate(template)}
+                                  size="sm"
+                                  variant="flat"
+                                  color="primary"
+                                  onPress={() =>
+                                    handleDownloadTemplate(template)
+                                  }
+                                  className="hover:scale-110 transition-transform"
                                 >
                                   <DownloadIcon />
                                 </Button>
-                                {/* Có thể thêm nút Print nếu muốn */}
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="flat"
+                                  color="secondary"
+                                  onPress={() => handlePrintTemplate(template)}
+                                  className="hover:scale-110 transition-transform"
+                                >
+                                  <PrintIcon />
+                                </Button>
                               </div>
                             </div>
                           ))

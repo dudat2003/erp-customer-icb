@@ -15,8 +15,9 @@ import {
   Divider,
 } from "@heroui/react";
 import { UploadIcon } from "@/components/icons/templates/upload-icon";
-import { useCreateTemplate } from "@/hooks/use-templates";
+import { useCreateTemplate } from "@/hooks/use-templates-ls";
 import { PLACEHOLDER_VARIABLES } from "@/types";
+import mammoth from "mammoth";
 
 interface UploadTemplateModalProps {
   isOpen: boolean;
@@ -60,42 +61,40 @@ export const UploadTemplateModal: React.FC<UploadTemplateModalProps> = ({
   const analyzeFile = async (file: File) => {
     setIsAnalyzing(true);
 
-    // Mock analysis - in real implementation, this would parse the .docx file
-    setTimeout(() => {
-      // Mock content extraction
-      const mockContent = `
-BIỂU MẪU - ${file.name.replace(".docx", "").toUpperCase()}
-
-Tên khách hàng: {Tên khách hàng}
-Mã khách hàng: {Mã khách hàng}
-Mã số thuế: {Mã số thuế}
-Ngày cấp GĐKKD: {Ngày cấp GĐKKD}
-Người đại diện: {Người đại diện}
-Chức vụ: {Chức vụ}
-Email: {Email}
-Số điện thoại: {Số điện thoại}
-Địa chỉ: {Địa chỉ}
-
-Nội dung chính của biểu mẫu:
-1. Thông tin cơ bản
-2. Yêu cầu dịch vụ
-3. Điều khoản và điều kiện
-4. Chữ ký xác nhận
-
-Ngày tạo: {Ngày tạo hợp đồng}
-Mã hợp đồng: {Mã hợp đồng}
-      `;
-
-      setContent(mockContent);
-
-      // Detect placeholders from content
+    try {
+      // Sử dụng mammoth để chuyển đổi file .docx sang HTML
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      
+      // Lấy HTML content
+      const htmlContent = result.value;
+      
+      // Chuyển HTML về text để hiển thị trong textarea (có thể preview)
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      const textContent = tempDiv.textContent || tempDiv.innerText || '';
+      
+      // Lưu cả HTML và text content
+      setContent(htmlContent); // Lưu HTML để sau này dùng cho export
+      
+      // Detect placeholders from HTML content
       const placeholders = PLACEHOLDER_VARIABLES.filter((placeholder) =>
-        mockContent.includes(placeholder)
+        htmlContent.includes(placeholder)
       );
 
       setDetectedPlaceholders(placeholders);
       setIsAnalyzing(false);
-    }, 1500);
+      
+      // Log warnings nếu có
+      if (result.messages.length > 0) {
+        console.warn('Mammoth warnings:', result.messages);
+      }
+      
+    } catch (error) {
+      console.error('Error analyzing file:', error);
+      setIsAnalyzing(false);
+      alert('Có lỗi xảy ra khi phân tích file. Vui lòng thử lại.');
+    }
   };
 
   const handleSubmit = () => {
@@ -104,24 +103,26 @@ Mã hợp đồng: {Mã hợp đồng}
       return;
     }
 
-    createTemplate(
-      {
-        name: templateName,
-        fileName: fileName,
-        content: content,
-        placeholders: detectedPlaceholders,
+    const newTemplate = {
+      id: Date.now().toString(),
+      name: templateName,
+      fileName: fileName,
+      content: content,
+      placeholders: detectedPlaceholders,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    createTemplate(newTemplate, {
+      onSuccess: () => {
+        onSuccess?.();
+        handleReset();
       },
-      {
-        onSuccess: () => {
-          onSuccess?.();
-          handleReset();
-        },
-        onError: (error) => {
-          console.error("Error creating template:", error);
-          alert("Có lỗi xảy ra khi tạo biểu mẫu");
-        },
-      }
-    );
+      onError: (error) => {
+        console.error("Error creating template:", error);
+        alert("Có lỗi xảy ra khi tạo biểu mẫu");
+      },
+    });
   };
 
   const handleReset = () => {
@@ -241,15 +242,29 @@ Mã hợp đồng: {Mã hợp đồng}
                           </CardBody>
                         </Card>
                       ) : (
-                        <Textarea
-                          label="Nội dung biểu mẫu"
-                          placeholder="Nội dung sẽ được tự động trích xuất từ file"
-                          value={content}
-                          onChange={(e) => setContent(e.target.value)}
-                          variant="bordered"
-                          minRows={10}
-                          maxRows={15}
-                        />
+                        <div className="space-y-4">
+                          <Textarea
+                            label="Nội dung HTML"
+                            placeholder="Nội dung HTML sẽ được tự động trích xuất từ file"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            variant="bordered"
+                            minRows={8}
+                            maxRows={12}
+                            description="Nội dung này đã được chuyển đổi từ file .docx sang HTML"
+                          />
+                          {content && (
+                            <Card>
+                              <CardBody>
+                                <h5 className="font-medium text-sm mb-2">Preview nội dung:</h5>
+                                <div 
+                                  className="prose prose-sm max-w-none border rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto"
+                                  dangerouslySetInnerHTML={{ __html: content }}
+                                />
+                              </CardBody>
+                            </Card>
+                          )}
+                        </div>
                       )}
                     </div>
 
