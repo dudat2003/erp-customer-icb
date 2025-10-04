@@ -1,12 +1,10 @@
 import { Input, Link, Navbar, NavbarContent } from "@heroui/react";
 import React from "react";
-import { FeedbackIcon } from "../icons/navbar/feedback-icon";
-import { GithubIcon } from "../icons/navbar/github-icon";
-import { SupportIcon } from "../icons/navbar/support-icon";
 import { SearchIcon } from "../icons/searchicon";
 import { BurguerButton } from "./burguer-button";
 import { NotificationsDropdown } from "./notifications-dropdown";
 import { UserDropdown } from "./user-dropdown";
+import { DarkModeSwitch } from "./darkmodeswitch";
 
 interface Props {
   children: React.ReactNode;
@@ -42,13 +40,8 @@ export const NavbarWrapper = ({ children }: Props) => {
           className="w-fit data-[justify=end]:flex-grow-0"
         >
           <NotificationsDropdown />
-          <Link
-            href="https://github.com/dudat2003/erp-customer-icb"
-            target={"_blank"}
-          >
-            <GithubIcon />
-          </Link>
           <NavbarContent>
+            <DarkModeSwitch />
             <UserDropdown />
           </NavbarContent>
         </NavbarContent>
