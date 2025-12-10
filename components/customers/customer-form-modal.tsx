@@ -9,11 +9,11 @@ import {
   useDisclosure,
 } from "@heroui/react";
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
-import { useCreateCustomer, useUpdateCustomer } from "@/hooks/use-customers-ls";
+import { useCreateCustomer, useUpdateCustomer } from "@/hooks/use-customers";
 import { useStaff } from "@/hooks/use-staff";
 import { Select, SelectItem } from "@heroui/react";
 import { DatePicker } from "@heroui/react";
-import { parseDate } from "@internationalized/date";
+import { parseDate, CalendarDate } from "@internationalized/date";
 import { PlusIcon } from "@/components/icons/plus-icon";
 
 interface CustomerFormModalProps {
@@ -27,7 +27,7 @@ export const CustomerFormModal = forwardRef<any, CustomerFormModalProps>(
     const createCustomer = useCreateCustomer();
     const updateCustomer = useUpdateCustomer();
     const { data: staffData } = useStaff();
-    const staff = staffData || [];
+    const staff = staffData?.data || [];
     const [form, setForm] = useState<any>({
       id: undefined,
       name: "",
@@ -95,13 +95,13 @@ export const CustomerFormModal = forwardRef<any, CustomerFormModalProps>(
         if (form.id) {
           await updateCustomer.mutateAsync({
             id: form.id,
-            data: { ...form, category: form.category as any },
+            data: { ...form, category: form.category },
           });
         } else {
           await createCustomer.mutateAsync({
             ...form,
             createdBy: "System",
-            category: form.category as any,
+            category: form.category,
           });
         }
         setSuccess(true);
@@ -249,18 +249,31 @@ export const CustomerFormModal = forwardRef<any, CustomerFormModalProps>(
                           label="Ngày cấp GĐKKD"
                           name="businessLicenseDate"
                           value={
-                            form.businessLicenseDate
+                            form.businessLicenseDate &&
+                            typeof form.businessLicenseDate === "string"
                               ? parseDate(form.businessLicenseDate)
                               : null
                           }
-                          onChange={(value) =>
-                            setForm({
-                              ...form,
-                              businessLicenseDate: value
-                                ? value.toString()
-                                : "",
-                            })
-                          }
+                          onChange={(value: CalendarDate | null) => {
+                            if (value) {
+                              // Convert CalendarDate to YYYY-MM-DD string
+                              const dateStr = `${value.year}-${String(
+                                value.month
+                              ).padStart(2, "0")}-${String(value.day).padStart(
+                                2,
+                                "0"
+                              )}`;
+                              setForm({
+                                ...form,
+                                businessLicenseDate: dateStr,
+                              });
+                            } else {
+                              setForm({
+                                ...form,
+                                businessLicenseDate: "",
+                              });
+                            }
+                          }}
                           variant="bordered"
                           className="col-span-1"
                         />

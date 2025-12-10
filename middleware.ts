@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
 
   if (
-    (pathname === "/" || pathname === "/accounts") &&
+    (pathname === "/" || pathname === "/customers" || pathname === "/staff") &&
     !request.cookies.has("userAuth")
   )
     return NextResponse.redirect(new URL("/login", request.url));
@@ -20,5 +20,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/accounts", "/login", "/register"],
+  matcher: ["/", "/customers", "/staff", "/login", "/register"],
 };

@@ -66,7 +66,7 @@ export const Content = () => (
           Khách hàng mới nhất
         </h3>
         <Link
-          href="/accounts"
+          href="/customers"
           as={NextLink}
           color="primary"
           className="cursor-pointer"

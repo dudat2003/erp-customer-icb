@@ -1,12 +1,11 @@
 import { Avatar, AvatarGroup, Card, CardBody } from "@heroui/react";
 import React from "react";
 import { useStaff } from "@/hooks/use-staff";
-import { Staff } from "@/types";
+import { Staff } from "@prisma/client";
 
 export const CardAgents = () => {
   const { data: staffData, isLoading } = useStaff();
-
-  const staff = staffData || [];
+  const staff = staffData?.data || [];
   const displayStaff = staff.slice(0, 5); // Show first 5 staff members
 
   return (

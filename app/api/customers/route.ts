@@ -1,45 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
-import { Customer, CreateCustomerRequest, PaginatedResponse } from "@/types";
-import { mockData } from "@/lib/mock-data";
+import { type NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma/client";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/customers
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "";
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const where: Prisma.CustomerWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                {
+                  customerCode: { contains: search, mode: "insensitive" },
+                },
+                { email: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {},
+        category ? { category } : {},
+      ],
+    };
 
-    let customers = mockData.getCustomers();
+    const [total, data] = await Promise.all([
+      prisma.customer.count({ where }),
+      prisma.customer.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    // Apply filters
-    if (search) {
-      customers = customers.filter(
-        (customer) =>
-          customer.name.toLowerCase().includes(search.toLowerCase()) ||
-          customer.customerCode.toLowerCase().includes(search.toLowerCase()) ||
-          customer.email.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (category) {
-      customers = customers.filter(
-        (customer) => customer.category === category
-      );
-    }
-
-    // Pagination
-    const total = customers.length;
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginatedCustomers = customers.slice(startIndex, endIndex);
-
-    const response: PaginatedResponse<Customer> = {
-      data: paginatedCustomers,
+    const response = {
+      data,
       total,
       page,
       pageSize,
@@ -58,35 +58,37 @@ export async function GET(request: NextRequest) {
 // POST /api/customers
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateCustomerRequest = await request.json();
+    const body = await request.json();
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const customers = mockData.getCustomers();
-
-    // Check if customer code already exists
-    const existingCustomer = customers.find(
-      (c: Customer) => c.customerCode === body.customerCode
-    );
-    if (existingCustomer) {
+    const duplicate = await prisma.customer.findFirst({
+      where: { customerCode: body.customerCode },
+      select: { id: true },
+    });
+    if (duplicate) {
       return NextResponse.json(
         { error: "Customer code already exists" },
         { status: 400 }
       );
     }
 
-    const newCustomer: Customer = {
-      id: Date.now().toString(),
-      ...body,
-      createdBy: "System", // In real app, get from auth
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    const created = await prisma.customer.create({
+      data: {
+        customerCode: body.customerCode,
+        name: body.name,
+        taxCode: body.taxCode,
+        businessLicenseDate: body.businessLicenseDate,
+        representative: body.representative,
+        position: body.position,
+        email: body.email,
+        phone: body.phone,
+        address: body.address,
+        category: body.category,
+        assignedTo: body.assignedTo,
+        createdBy: "System",
+      },
+    });
 
-    mockData.addCustomer(newCustomer);
-
-    return NextResponse.json(newCustomer, { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch {
     return NextResponse.json(
       { error: "Failed to create customer" },
@@ -95,53 +97,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT /api/customers/[id]
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const body: Partial<Customer> = await request.json();
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const customers = mockData.getCustomers();
-    const existingCustomer = customers.find((c: Customer) => c.id === id);
-
-    if (!existingCustomer) {
-      return NextResponse.json(
-        { error: "Customer not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if customer code already exists (if updating)
-    if (body.customerCode) {
-      const duplicateCustomer = customers.find(
-        (c: Customer) => c.customerCode === body.customerCode && c.id !== id
-      );
-      if (duplicateCustomer) {
-        return NextResponse.json(
-          { error: "Customer code already exists" },
-          { status: 400 }
-        );
-      }
-    }
-
-    const updatedCustomer = {
-      ...existingCustomer,
-      ...body,
-      updatedAt: new Date().toISOString(),
-    };
-    mockData.updateCustomer(id, updatedCustomer);
-
-    return NextResponse.json(updatedCustomer);
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to update customer" },
-      { status: 500 }
-    );
-  }
-}
+// PUT should be handled in /api/customers/[id]

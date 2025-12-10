@@ -1,11 +1,9 @@
-
 import { Button, Tooltip } from "@heroui/react";
 import { UploadIcon } from "../icons/templates/upload-icon";
 import { useRouter } from "next/navigation";
-import { CustomerFormModal } from "@/components/accounts/customer-form-modal";
+import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { UploadTemplateModal } from "@/components/templates/upload-template-modal";
 import { useState } from "react";
-
 
 export const QuickActions = () => {
   const router = useRouter();

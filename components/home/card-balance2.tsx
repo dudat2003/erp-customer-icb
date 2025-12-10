@@ -1,42 +1,13 @@
 import { Card, CardBody, Spinner } from "@heroui/react";
 import React from "react";
 import { Community } from "../icons/community";
-import { useCustomers } from "@/hooks/use-customers-ls";
+import { useDashboardStats } from "@/hooks/use-stats";
 
 export const CardBalance2 = () => {
-  const { data: customersData, isLoading } = useCustomers({
-    page: 1,
-    pageSize: 100,
-    category: "closed",
-  });
+  const { data: stats, isLoading } = useDashboardStats();
 
-  const closedCustomers = customersData?.data || [];
-  const totalClosed = closedCustomers.length;
-  const now = new Date();
-  const thisMonth = now.getMonth() + 1;
-  const thisYear = now.getFullYear();
-  const customersThisMonth = closedCustomers.filter((c) => {
-    const created = new Date(c.createdAt);
-    return (
-      created.getMonth() + 1 === thisMonth && created.getFullYear() === thisYear
-    );
-  }).length;
-  const customersLastMonth = closedCustomers.filter((c) => {
-    const created = new Date(c.createdAt);
-    return (
-      created.getMonth() + 1 === (thisMonth === 1 ? 12 : thisMonth - 1) &&
-      created.getFullYear() === (thisMonth === 1 ? thisYear - 1 : thisYear)
-    );
-  }).length;
-  const growthRate =
-    customersLastMonth === 0
-      ? customersThisMonth > 0
-        ? "+100%"
-        : "0%"
-      : `${(
-          ((customersThisMonth - customersLastMonth) / customersLastMonth) *
-          100
-        ).toFixed(1)}%`;
+  const totalClosed = stats?.closed.total || 0;
+  const customersThisMonth = stats?.closed.thisMonth || 0;
 
   return (
     <Card className="xl:max-w-sm bg-success-50 rounded-xl shadow-md px-3 w-full">
@@ -56,7 +27,6 @@ export const CardBalance2 = () => {
               `${totalClosed.toLocaleString("vi-VN")} khách hàng`
             )}
           </span>
-          <span className="text-success text-xs">{growthRate}</span>
         </div>
         <div className="flex items-center gap-6">
           <div>

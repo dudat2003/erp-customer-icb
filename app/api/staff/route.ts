@@ -1,44 +1,86 @@
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { Staff } from "@/types";
-
-// Mock staff data
-const MOCK_STAFF: Staff[] = [
-  {
-    id: "1",
-    name: "Nguyễn Văn An",
-    email: "an.nguyen@icb.com",
-    role: "Trưởng phòng",
-  },
-  {
-    id: "2",
-    name: "Trần Thị Bình",
-    email: "binh.tran@icb.com",
-    role: "Chuyên viên",
-  },
-  {
-    id: "3",
-    name: "Lê Minh Châu",
-    email: "chau.le@icb.com",
-    role: "Chuyên viên",
-  },
-  {
-    id: "4",
-    name: "Phạm Thị Dung",
-    email: "dung.pham@icb.com",
-    role: "Nhân viên",
-  },
-];
+import { prisma } from "@/lib/prisma/client";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/staff
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
+    const search = searchParams.get("search") || "";
+    const role = searchParams.get("role") || "";
 
-    return NextResponse.json(MOCK_STAFF);
+    const where: Prisma.StaffWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+                { role: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {},
+        role ? { role: { contains: role, mode: "insensitive" } } : {},
+      ],
+    };
+
+    const [total, data] = await Promise.all([
+      prisma.staff.count({ where }),
+      prisma.staff.findMany({
+        where,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    const response = {
+      data,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+
+    return NextResponse.json(response);
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch staff" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/staff
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const duplicate = await prisma.staff.findFirst({
+      where: { email: body.email },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Email already exists" },
+        { status: 400 }
+      );
+    }
+
+    const created = await prisma.staff.create({
+      data: {
+        name: body.name,
+        email: body.email,
+        role: body.role,
+      },
+    });
+    return NextResponse.json(created, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to create staff" },
       { status: 500 }
     );
   }

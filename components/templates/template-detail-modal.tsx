@@ -37,7 +37,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   const handleDownload = () => {
     // Mock download functionality
     const element = document.createElement("a");
-    const file = new Blob([template.content], { type: "text/plain" });
+    const file = new Blob([template.content || ""], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
     element.download = `${template.name}.docx`;
     document.body.appendChild(element);
@@ -159,7 +159,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                   </CardHeader>
                   <CardBody>
                     <Textarea
-                      value={template.content}
+                      value={template.content || ""}
                       variant="bordered"
                       minRows={15}
                       maxRows={20}

@@ -46,10 +46,16 @@ export const SidebarWrapper = () => {
             />
             <SidebarMenu title="Main Menu">
               <SidebarItem
-                isActive={pathname === "/accounts"}
+                isActive={pathname === "/customers"}
                 title="Khách hàng"
                 icon={<AccountsIcon />}
-                href="accounts"
+                href="customers"
+              />
+              <SidebarItem
+                isActive={pathname === "/staff"}
+                title="Nhân viên"
+                icon={<AccountsIcon />}
+                href="staff"
               />
               <SidebarItem
                 isActive={pathname === "/templates"}
@@ -69,7 +75,7 @@ export const SidebarWrapper = () => {
               /> */}
             </SidebarMenu>
           </div>
-          <div className={Sidebar.Footer()}>
+          {/* <div className={Sidebar.Footer()}>
             <Tooltip content={"Settings"} color="primary">
               <div className="max-w-fit">
                 <SettingsIcon />
@@ -86,7 +92,7 @@ export const SidebarWrapper = () => {
                 size="sm"
               />
             </Tooltip>
-          </div>
+          </div> */}
         </div>
       </div>
     </aside>

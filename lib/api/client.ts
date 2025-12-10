@@ -1,12 +1,4 @@
-import {
-  Customer,
-  CreateCustomerRequest,
-  UpdateCustomerRequest,
-  PaginatedResponse,
-  Staff,
-  Template,
-  CreateTemplateRequest,
-} from "@/types";
+import type { Customer, Staff, Template } from "@prisma/client";
 
 // Base API client
 class ApiClient {
@@ -37,7 +29,7 @@ class ApiClient {
     pageSize?: number;
     search?: string;
     category?: string;
-  }): Promise<PaginatedResponse<Customer>> {
+  }): Promise<{ data: Customer[]; total: number }> {
     const searchParams = new URLSearchParams();
 
     if (params?.page) searchParams.append("page", params.page.toString());
@@ -49,24 +41,21 @@ class ApiClient {
     const query = searchParams.toString();
     const endpoint = `/customers${query ? `?${query}` : ""}`;
 
-    return this.request<PaginatedResponse<Customer>>(endpoint);
+    return this.request<{ data: Customer[]; total: number }>(endpoint);
   }
 
   async getCustomer(id: string): Promise<Customer> {
     return this.request<Customer>(`/customers/${id}`);
   }
 
-  async createCustomer(data: CreateCustomerRequest): Promise<Customer> {
+  async createCustomer(data: Customer): Promise<Customer> {
     return this.request<Customer>("/customers", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async updateCustomer(
-    id: string,
-    data: UpdateCustomerRequest
-  ): Promise<Customer> {
+  async updateCustomer(id: string, data: Customer): Promise<Customer> {
     return this.request<Customer>(`/customers/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
@@ -80,18 +69,65 @@ class ApiClient {
   }
 
   // Staff API
-  async getStaff(): Promise<Staff[]> {
-    return this.request<Staff[]>("/staff");
+  async getStaff(params?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    role?: string;
+  }): Promise<{ data: Staff[]; total: number }> {
+    const searchParams = new URLSearchParams();
+
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.pageSize)
+      searchParams.append("pageSize", params.pageSize.toString());
+    if (params?.search) searchParams.append("search", params.search);
+    if (params?.role) searchParams.append("role", params.role);
+
+    const query = searchParams.toString();
+    const endpoint = `/staff${query ? `?${query}` : ""}`;
+
+    return this.request<{ data: Staff[]; total: number }>(endpoint);
+  }
+
+  async createStaff(data: Partial<Staff>): Promise<Staff> {
+    return this.request<Staff>("/staff", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateStaff(id: string, data: Partial<Staff>): Promise<Staff> {
+    return this.request<Staff>(`/staff/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteStaff(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/staff/${id}`, {
+      method: "DELETE",
+    });
   }
 
   // Template API
-  async getTemplates(): Promise<Template[]> {
-    return this.request<Template[]>("/templates");
+  async getTemplates(): Promise<{ data: Template[]; total: number }> {
+    return this.request<{ data: Template[]; total: number }>("/templates");
   }
 
-  async createTemplate(data: CreateTemplateRequest): Promise<Template> {
+  async getTemplate(id: string): Promise<Template> {
+    return this.request<Template>(`/templates/${id}`);
+  }
+
+  async createTemplate(data: Template): Promise<Template> {
     return this.request<Template>("/templates", {
       method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTemplate(id: string, data: Partial<Template>): Promise<Template> {
+    return this.request<Template>(`/templates/${id}`, {
+      method: "PUT",
       body: JSON.stringify(data),
     });
   }
@@ -100,6 +136,11 @@ class ApiClient {
     return this.request<{ success: boolean }>(`/templates/${id}`, {
       method: "DELETE",
     });
+  }
+
+  // Stats API
+  async getDashboardStats(): Promise<any> {
+    return this.request<any>("/stats/dashboard");
   }
 }
 

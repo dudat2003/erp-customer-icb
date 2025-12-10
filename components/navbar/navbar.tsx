@@ -42,12 +42,7 @@ export const NavbarWrapper = ({ children }: Props) => {
           className="w-fit data-[justify=end]:flex-grow-0"
         >
           <NotificationsDropdown />
-          <Link
-            href="https://github.com/dudat2003/erp-customer-icb"
-            target={"_blank"}
-          >
-            <GithubIcon />
-          </Link>
+
           <NavbarContent>
             <UserDropdown />
           </NavbarContent>

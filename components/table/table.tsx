@@ -23,15 +23,15 @@ import {
   Image,
 } from "@heroui/react";
 import React, { useState, useRef } from "react";
-import { useCustomers } from "@/hooks/use-customers-ls";
+import { useCustomers } from "@/hooks/use-customers";
 import { useStaff } from "@/hooks/use-staff";
 import { Customer, CUSTOMER_CATEGORIES } from "@/types";
 import { apiClient } from "@/lib/api/client";
 import { EyeIcon } from "@/components/icons/table/eye-icon";
 import { EditIcon } from "@/components/icons/table/edit-icon";
 import { DeleteIcon } from "@/components/icons/table/delete-icon";
-import { CustomerFormModal } from "../accounts/customer-form-modal";
-import { CustomerDetailModal } from "../accounts/customer-detail-modal";
+import { CustomerFormModal } from "../customers/customer-form-modal";
+import { CustomerDetailModal } from "../customers/customer-detail-modal";
 
 const columns = [
   { name: "STT", uid: "index" },
@@ -44,18 +44,28 @@ const columns = [
   { name: "", uid: "actions" },
 ];
 
-export const TableWrapper = () => {
+interface TableWrapperProps {
+  searchTerm?: string;
+  categoryFilter?: string;
+}
+
+export const TableWrapper = ({
+  searchTerm = "",
+  categoryFilter = "",
+}: TableWrapperProps) => {
   const {
     data: customersData,
     isLoading,
     refetch,
   } = useCustomers({
     page: 1,
-    pageSize: 10,
+    pageSize: 100,
+    search: searchTerm,
+    category: categoryFilter,
   });
 
   const { data: staffData, isLoading: isStaffLoading } = useStaff();
-  const staff = staffData || [];
+  const staff = staffData?.data || [];
 
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(
     null
@@ -76,7 +86,6 @@ export const TableWrapper = () => {
 
   // Helper function to get staff name by ID
   const getStaffNameById = (staffId: string): string => {
-    console.log("Staff ID:", staffId, "Staff data:", staff);
     if (isStaffLoading) return "Đang tải...";
     const staffMember = staff.find((s) => s.id === staffId);
     return staffMember ? staffMember.name : `ID: ${staffId}`;
@@ -123,22 +132,11 @@ export const TableWrapper = () => {
         // Show success notification
         alert("Khách hàng đã được xóa thành công!");
       } catch (error) {
-        console.error("Error deleting customer:", error);
         alert("Có lỗi xảy ra khi xóa khách hàng!");
       } finally {
         setIsDeleting(false);
       }
     }
-  };
-
-  const handleDownloadTemplate = (customer: Customer) => {
-    // TODO: Implement template download
-    console.log("Download template for:", customer);
-  };
-
-  const handlePrintTemplate = (customer: Customer) => {
-    // TODO: Implement template print
-    console.log("Print template for:", customer);
   };
 
   const renderCell = (customer: Customer, columnKey: string, index: number) => {
@@ -186,7 +184,11 @@ export const TableWrapper = () => {
             size="sm"
             variant="flat"
           >
-            {CUSTOMER_CATEGORIES[customer.category]}
+            {customer.category
+              ? CUSTOMER_CATEGORIES[
+                  customer.category as keyof typeof CUSTOMER_CATEGORIES
+                ]
+              : "N/A"}
           </Chip>
         );
       case "createdAt":
@@ -210,7 +212,9 @@ export const TableWrapper = () => {
         return (
           <div className="flex flex-col">
             <p className="text-bold text-sm">
-              {getStaffNameById(customer.assignedTo)}
+              {customer.assignedTo
+                ? getStaffNameById(customer.assignedTo)
+                : "N/A"}
             </p>
           </div>
         );
@@ -278,7 +282,19 @@ export const TableWrapper = () => {
               </TableColumn>
             )}
           </TableHeader>
-          <TableBody items={customers}>
+          <TableBody
+            emptyContent={
+              <div className="text-center py-8">
+                <p className="text-lg text-default-500">
+                  Chưa có khách hàng nào
+                </p>
+                <p className="text-sm text-default-400 mt-2">
+                  Hãy tải lên khách hàng đầu tiên của bạn
+                </p>
+              </div>
+            }
+            items={customers}
+          >
             {(customer) => (
               <TableRow key={customer.id}>
                 {(columnKey) => {

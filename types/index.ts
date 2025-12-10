@@ -1,74 +1,36 @@
-// Customer types
-export interface Customer {
-  id: string;
-  customerCode: string;
-  name: string;
-  taxCode: string;
-  businessLicenseDate: string;
-  representative: string;
-  position: string;
-  email: string;
-  phone: string;
-  address: string;
-  category: CustomerCategory;
-  assignedTo: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// ============================================
+// RE-EXPORT PRISMA GENERATED TYPES
+// ============================================
+// Thay vì tự định nghĩa, ta sử dụng types được Prisma auto-generate
+export type { Customer, Staff, Template, Prisma } from "@prisma/client";
 
+// ============================================
+// DERIVED TYPES & DTOs
+// ============================================
+// Types này derive từ Prisma models hoặc là custom cho UI/API
+
+import type { Prisma } from "@prisma/client";
+
+// Customer category type - derived từ schema field
 export type CustomerCategory = "potential" | "closed" | "regular" | "promising";
 
-export interface CreateCustomerRequest {
-  customerCode: string;
-  name: string;
-  taxCode: string;
-  businessLicenseDate: string;
-  representative: string;
-  position: string;
-  email: string;
-  phone: string;
-  address: string;
-  category: CustomerCategory;
-  assignedTo: string;
-}
+// Request types cho API
+export type CreateCustomerRequest = Omit<
+  Prisma.CustomerCreateInput,
+  "id" | "createdAt" | "updatedAt"
+>;
 
 export interface UpdateCustomerRequest extends Partial<CreateCustomerRequest> {
   id: string;
 }
 
-// Template types
-export interface Template {
-  id: string;
-  name: string;
-  fileName: string;
-  placeholders: string[];
-  content: string; // Mock content as text
-  createdAt: string;
-  updatedAt: string;
-}
+export type CreateTemplateRequest = Omit<
+  Prisma.TemplateCreateInput,
+  "id" | "createdAt" | "updatedAt"
+>;
 
-export interface CreateTemplateRequest {
-  name: string;
-  fileName: string;
-  content: string;
-  placeholders: string[];
-}
-
-export interface CustomerTemplate {
+export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
   id: string;
-  customerId: string;
-  templateId: string;
-  generatedContent: string;
-  createdAt: string;
-}
-
-// Staff types
-export interface Staff {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
 }
 
 // API Response types
@@ -86,7 +48,10 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// Constants
+//
+// ============================================
+// CONSTANTS
+// ============================================
 export const CUSTOMER_CATEGORIES = {
   potential: "KH tiềm năng",
   closed: "KH đã chốt",
@@ -107,3 +72,9 @@ export const PLACEHOLDER_VARIABLES = [
   "{Mã hợp đồng}",
   "{Ngày tạo hợp đồng}",
 ] as const;
+
+// Helper function to generate contract code
+export const generateContractCode = (customerCode: string): string => {
+  const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+  return `HD-${customerCode}-${timestamp}`;
+};
