@@ -33,9 +33,11 @@ export function useGenerateDocument() {
  */
 export function useDownloadDocument() {
   return useMutation({
-    mutationFn: async (params: GenerateDocumentParams & { fileName?: string }) => {
+    mutationFn: async (
+      params: GenerateDocumentParams & { fileName?: string }
+    ) => {
       const blob = await apiClient.downloadDocument(params);
-      
+
       // Trigger download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -45,7 +47,7 @@ export function useDownloadDocument() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       return { success: true };
     },
     onSuccess: () => {

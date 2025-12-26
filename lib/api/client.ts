@@ -144,13 +144,14 @@ class ApiClient {
     customerId: string;
     outputFormat?: "json" | "docx";
   }): Promise<{ success: boolean; docxBase64: string; fileName: string }> {
-    return this.request<{ success: boolean; docxBase64: string; fileName: string }>(
-      "/documents/generate-from-template",
-      {
-        method: "POST",
-        body: JSON.stringify(params),
-      }
-    );
+    return this.request<{
+      success: boolean;
+      docxBase64: string;
+      fileName: string;
+    }>("/documents/generate-from-template", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
   }
 
   async downloadDocument(params: {
