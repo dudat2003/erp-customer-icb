@@ -9,10 +9,6 @@ import {
   Chip,
   User,
   Button,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
   Modal,
   ModalContent,
   ModalHeader,
@@ -27,6 +23,7 @@ import { useCustomers } from "@/hooks/use-customers";
 import { useStaff } from "@/hooks/use-staff";
 import { Customer, CUSTOMER_CATEGORIES } from "@/types";
 import { apiClient } from "@/lib/api/client";
+import { formatDate, formatTime } from "@/lib/dayjs";
 import { EyeIcon } from "@/components/icons/table/eye-icon";
 import { EditIcon } from "@/components/icons/table/edit-icon";
 import { DeleteIcon } from "@/components/icons/table/delete-icon";
@@ -155,18 +152,10 @@ export const TableWrapper = ({
         );
       case "customer":
         return (
-          <User
-            avatarProps={{
-              radius: "lg",
-              src: `https://i.pravatar.cc/150?u=${customer.id}`,
-            }}
-            description={customer.email}
-            name={customer.name}
-            className="cursor-pointer"
-            onClick={() => handleViewCustomer(customer)}
-          >
-            {customer.name}
-          </User>
+          <div className="flex flex-col flex-1">
+            <span className="text-xs font-semibold">{customer.name}</span>
+            <span className="text-xs text-default-500">{customer.email}</span>
+          </div>
         );
       case "category":
         return (
@@ -195,10 +184,10 @@ export const TableWrapper = ({
         return (
           <div className="flex flex-col">
             <p className="text-bold text-sm">
-              {new Date(customer.createdAt).toLocaleDateString("vi-VN")}
+              {formatDate(customer.createdAt)}
             </p>
             <p className="text-xs text-default-400">
-              {new Date(customer.createdAt).toLocaleTimeString("vi-VN")}
+              {formatTime(customer.createdAt)}
             </p>
           </div>
         );
@@ -332,13 +321,6 @@ export const TableWrapper = ({
                     </p>
                     <div className=" bg-default-50 p-4 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Image
-                          src={`https://i.pravatar.cc/150?u=${customerToDelete.id}`}
-                          alt="Avatar"
-                          className="w-12 h-12 rounded-full"
-                          width={48}
-                          height={48}
-                        />
                         <div>
                           <p className="font-semibold text-lg">
                             {customerToDelete.name}

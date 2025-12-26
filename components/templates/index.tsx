@@ -30,6 +30,7 @@ import { DeleteIcon } from "@/components/icons/table/delete-icon";
 import { useTemplates, useDeleteTemplate } from "@/hooks/use-templates";
 import { Template } from "@/types";
 import { UploadTemplateModal } from "@/components/templates/upload-template-modal";
+import { formatDate } from "@/lib/dayjs";
 import { TemplateDetailModal } from "@/components/templates/template-detail-modal";
 
 const columns = [
@@ -134,7 +135,7 @@ export const Templates = () => {
 				return (
 					<div className="flex flex-col">
 						<p className="text-sm">
-							{new Date(template.createdAt).toLocaleDateString("vi-VN")}
+							{formatDate(template.createdAt)}
 						</p>
 					</div>
 				);

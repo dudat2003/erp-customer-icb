@@ -21,6 +21,7 @@ import { PrintIcon } from "@/components/icons/templates/print-icon";
 import { saveAs } from "file-saver";
 import type { Template } from "@prisma/client";
 import { CUSTOMER_CATEGORIES } from "@/types";
+import dayjs, { formatDate } from "@/lib/dayjs";
 
 interface CustomerDetailModalProps {
   onEdit?: (customer: Customer) => void;
@@ -64,14 +65,14 @@ export const CustomerDetailModal = forwardRef<
       "{Mã khách hàng}": customer.customerCode || "",
       "{Mã số thuế}": customer.taxCode || "",
       "{Ngày cấp GĐKKD}": customer.businessLicenseDate
-        ? new Date(customer.businessLicenseDate).toLocaleDateString("vi-VN")
+        ? formatDate(customer.businessLicenseDate)
         : "",
       "{Người đại diện}": customer.representative || "",
       "{Chức vụ}": customer.position || "",
       "{Email}": customer.email || "",
       "{Số điện thoại}": customer.phone || "",
       "{Địa chỉ}": customer.address || "",
-      "{Ngày tạo hợp đồng}": new Date().toLocaleDateString("vi-VN"),
+      "{Ngày tạo hợp đồng}": dayjs().format("DD/MM/YYYY"),
       "{Mã hợp đồng}": generateContractCode(customer.customerCode),
     };
 
@@ -347,9 +348,7 @@ export const CustomerDetailModal = forwardRef<
                         </label>
                         <p className="text-sm text-default-900">
                           {customer.businessLicenseDate
-                            ? new Date(
-                                customer.businessLicenseDate
-                              ).toLocaleDateString("vi-VN")
+                            ? formatDate(customer.businessLicenseDate)
                             : "Chưa có"}
                         </p>
                       </div>
@@ -418,9 +417,7 @@ export const CustomerDetailModal = forwardRef<
                           Ngày tạo
                         </label>
                         <p className="text-sm text-default-900">
-                          {new Date(customer.createdAt).toLocaleDateString(
-                            "vi-VN"
-                          )}
+                          {formatDate(customer.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -461,9 +458,7 @@ export const CustomerDetailModal = forwardRef<
                                 </p>
                                 <p className="text-xs text-default-500">
                                   {template.fileName || "N/A"} •{" "}
-                                  {new Date(
-                                    template.createdAt
-                                  ).toLocaleDateString("vi-VN")}
+                                  {formatDate(template.createdAt)}
                                 </p>
                               </div>
                             </div>

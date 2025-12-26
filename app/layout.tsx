@@ -5,8 +5,8 @@ import { fontSans } from "@/config/fonts";
 import clsx from "clsx";
 
 export const metadata: Metadata = {
-  title: "ICB ERP System - Hệ thống quản lý khách hàng",
-  description: "Hệ thống ERP quản lý khách hàng và biểu mẫu chứng nhận của ICB",
+  title: "Hệ thống quản lý khách hàng",
+  description: "Hệ thống ERP quản lý khách hàng và biểu mẫu chứng nhận",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={clsx("font-sans antialiased", fontSans.className)}>
         <Providers>{children}</Providers>
       </body>

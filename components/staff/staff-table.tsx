@@ -15,6 +15,7 @@ import { EditIcon } from "@/components/icons/table/edit-icon";
 import { DeleteIcon } from "@/components/icons/table/delete-icon";
 import { useDeleteStaff } from "@/hooks/use-staff";
 import type { Staff } from "@prisma/client";
+import { formatDate } from "@/lib/dayjs";
 import toast from "react-hot-toast";
 
 interface StaffTableProps {
@@ -103,7 +104,7 @@ export const StaffTable: React.FC<StaffTableProps> = ({
         return (
           <div className="flex flex-col">
             <p className="text-sm">
-              {new Date(staffMember.createdAt).toLocaleDateString("vi-VN")}
+              {formatDate(staffMember.createdAt)}
             </p>
           </div>
         );

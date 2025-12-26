@@ -1,6 +1,7 @@
 import React from "react";
 import Chart, { Props } from "react-apexcharts";
 import { useCustomers } from "@/hooks/use-customers";
+import dayjs from "@/lib/dayjs";
 
 export const Steam = () => {
 	// Fetch data for different customer categories
@@ -32,21 +33,18 @@ export const Steam = () => {
 	const generateMonthlyData = (customers: any[]) => {
 		const months = [];
 		const data = [];
-		const now = new Date();
 
 		for (let i = 5; i >= 0; i--) {
-			const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-			const monthName = month.toLocaleDateString("vi-VN", {
-				month: "short",
-			});
+			const month = dayjs().subtract(i, "month");
+			const monthName = month.format("MMM");
 			months.push(monthName);
 
 			const monthCustomers =
 				customers?.filter((c) => {
-					const created = new Date(c.createdAt);
+					const created = dayjs(c.createdAt);
 					return (
-						created.getMonth() === month.getMonth() &&
-						created.getFullYear() === month.getFullYear()
+						created.month() === month.month() &&
+						created.year() === month.year()
 					);
 				}).length || 0;
 

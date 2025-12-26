@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { generateContractCode } from "@/types";
+import dayjs from "@/lib/dayjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       "{Số điện thoại}": customer.phone || "",
       "{Địa chỉ}": customer.address || "",
       "{Mã hợp đồng}": generateContractCode(customer.customerCode),
-      "{Ngày tạo hợp đồng}": new Date().toLocaleDateString("vi-VN"),
+      "{Ngày tạo hợp đồng}": dayjs().format("DD/MM/YYYY"),
     };
 
     // Replace all placeholders

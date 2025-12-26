@@ -16,6 +16,7 @@ import {
 } from "@heroui/react";
 import { TemplatesIcon } from "@/components/icons/sidebar/templates-icon";
 import { Template } from "@/types";
+import { formatDateLong } from "@/lib/dayjs";
 
 interface TemplateDetailModalProps {
   isOpen: boolean;
@@ -90,16 +91,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                       <div>
                         <p className="text-sm text-default-500">Ngày tạo</p>
                         <p className="font-semibold">
-                          {new Date(template.createdAt).toLocaleDateString(
-                            "vi-VN",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {formatDateLong(template.createdAt)}
                         </p>
                       </div>
                       <div>
@@ -107,16 +99,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                           Cập nhật lần cuối
                         </p>
                         <p className="font-semibold">
-                          {new Date(template.updatedAt).toLocaleDateString(
-                            "vi-VN",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {formatDateLong(template.updatedAt)}
                         </p>
                       </div>
                     </div>
