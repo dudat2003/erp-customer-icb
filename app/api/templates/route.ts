@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
 				fileName: body.fileName,
 				content: body.content,
 				placeholders: body.placeholders ?? [],
+				fileBase64: body.fileBase64 ?? null, // Lưu file gốc dạng base64
 			},
 		});
 

@@ -1,18 +1,18 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-	Button,
-	Card,
-	CardBody,
-	Chip,
-	Input,
-	Modal,
-	ModalBody,
-	ModalContent,
-	ModalFooter,
-	ModalHeader,
-	Textarea,
-	Divider,
+  Button,
+  Card,
+  CardBody,
+  Chip,
+  Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  Divider,
+  Spinner,
 } from "@heroui/react";
 import { UploadIcon } from "@/components/icons/templates/upload-icon";
 import { useCreateTemplate } from "@/hooks/use-templates";
@@ -20,328 +20,394 @@ import { PLACEHOLDER_VARIABLES } from "@/types";
 import mammoth from "mammoth";
 
 interface UploadTemplateModalProps {
-	isOpen: boolean;
-	onClose?: () => void;
-	onSuccess?: () => void;
+  isOpen: boolean;
+  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
 export const UploadTemplateModal: React.FC<UploadTemplateModalProps> = ({
-	isOpen,
-	onClose,
-	onSuccess,
+  isOpen,
+  onClose,
+  onSuccess,
 }) => {
-	const [templateName, setTemplateName] = useState("");
-	const [fileName, setFileName] = useState("");
-	const [content, setContent] = useState("");
-	const [detectedPlaceholders, setDetectedPlaceholders] = useState<string[]>(
-		[],
-	);
-	const [isAnalyzing, setIsAnalyzing] = useState(false);
-	const fileInputRef = useRef<HTMLInputElement>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [content, setContent] = useState(""); // HTML content for placeholder replacement
+  const [fileBase64, setFileBase64] = useState(""); // Original file for preview
+  const [detectedPlaceholders, setDetectedPlaceholders] = useState<string[]>(
+    []
+  );
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
-	const { mutate: createTemplate, isPending } = useCreateTemplate();
+  const { mutate: createTemplate, isPending } = useCreateTemplate();
 
-	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (!file) return;
+  // Render docx preview when fileBase64 changes
+  const renderDocxPreview = useCallback(async () => {
+    if (!fileBase64 || !previewContainerRef.current) {
+      return;
+    }
 
-		// Validate file type
-		if (!file.name.endsWith(".docx")) {
-			alert("Vui lòng chọn file định dạng .docx");
-			return;
-		}
+    setIsPreviewLoading(true);
 
-		setFileName(file.name);
-		setTemplateName(file.name.replace(".docx", ""));
+    try {
+      // Dynamic import docx-preview (only on client)
+      const docxPreview = await import("docx-preview");
 
-		// Mock file reading and placeholder detection
-		analyzeFile(file);
-	};
+      // Convert base64 to ArrayBuffer
+      const binaryString = atob(fileBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
 
-	const analyzeFile = async (file: File) => {
-		setIsAnalyzing(true);
+      // Clear previous preview
+      previewContainerRef.current.innerHTML = "";
 
-		try {
-			// Sử dụng mammoth để chuyển đổi file .docx sang HTML
-			const arrayBuffer = await file.arrayBuffer();
-			const result = await mammoth.convertToHtml({ arrayBuffer });
+      // Render docx with ArrayBuffer
+      await docxPreview.renderAsync(
+        bytes.buffer,
+        previewContainerRef.current,
+        undefined,
+        {
+          className: "docx-wrapper",
+          inWrapper: true,
+          ignoreWidth: false,
+          ignoreHeight: false,
+          ignoreFonts: false,
+          breakPages: true,
+          ignoreLastRenderedPageBreak: true,
+          experimental: true,
+          trimXmlDeclaration: true,
+          useBase64URL: true,
+          renderHeaders: true,
+          renderFooters: true,
+          renderFootnotes: true,
+          renderEndnotes: true,
+        }
+      );
 
-			// Lấy HTML content
-			const htmlContent = result.value;
+      setPreviewError(false);
+    } catch (error) {
+      setPreviewError(true);
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  }, [fileBase64]);
 
-			// Chuyển HTML về text để hiển thị trong textarea (có thể preview)
-			const tempDiv = document.createElement("div");
-			tempDiv.innerHTML = htmlContent;
-			const textContent = tempDiv.textContent || tempDiv.innerText || "";
+  useEffect(() => {
+    if (fileBase64 && isOpen) {
+      // Delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        renderDocxPreview();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [fileBase64, isOpen, renderDocxPreview]);
 
-			// Lưu cả HTML và text content
-			setContent(htmlContent); // Lưu HTML để sau này dùng cho export
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-			// Detect placeholders from HTML content
-			const placeholders = PLACEHOLDER_VARIABLES.filter((placeholder) =>
-				htmlContent.includes(placeholder),
-			);
+    // Validate file type
+    if (!file.name.endsWith(".docx")) {
+      alert("Vui lòng chọn file định dạng .docx");
+      return;
+    }
 
-			setDetectedPlaceholders(placeholders);
-			setIsAnalyzing(false);
+    setFileName(file.name);
+    setTemplateName(file.name.replace(".docx", ""));
+    setIsAnalyzing(true);
+    setPreviewError(false); // Reset preview error for new file
 
-			// Log warnings nếu có
-			if (result.messages.length > 0) {
-				console.warn("Mammoth warnings:", result.messages);
-			}
-		} catch (error) {
-			console.error("Error analyzing file:", error);
-			setIsAnalyzing(false);
-			alert("Có lỗi xảy ra khi phân tích file. Vui lòng thử lại.");
-		}
-	};
+    try {
+      const arrayBuffer = await file.arrayBuffer();
 
-	const handleSubmit = () => {
-		if (!templateName.trim() || !fileName.trim() || !content.trim()) {
-			alert("Vui lòng điền đầy đủ thông tin");
-			return;
-		}
+      // 1. Convert to base64 for storage and preview
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64 = btoa(binary);
+      setFileBase64(base64);
 
-		const newTemplate = {
-			id: Date.now().toString(),
-			name: templateName,
-			description: "",
-			fileName: fileName,
-			content: content,
-			placeholders: detectedPlaceholders,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
+      // 2. Extract HTML content using mammoth (for placeholder replacement)
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      const htmlContent = result.value;
+      setContent(htmlContent);
 
-		createTemplate(newTemplate, {
-			onSuccess: () => {
-				onSuccess?.();
-				handleReset();
-			},
-			onError: (error) => {
-				console.error("Error creating template:", error);
-				alert("Có lỗi xảy ra khi tạo biểu mẫu");
-			},
-		});
-	};
+      // 3. Detect placeholders
+      const placeholders = PLACEHOLDER_VARIABLES.filter((placeholder) =>
+        htmlContent.includes(placeholder)
+      );
+      setDetectedPlaceholders(placeholders);
 
-	const handleReset = () => {
-		setTemplateName("");
-		setFileName("");
-		setContent("");
-		setDetectedPlaceholders([]);
-		setIsAnalyzing(false);
-		if (fileInputRef.current) {
-			fileInputRef.current.value = "";
-		}
-	};
+      if (result.messages.length > 0) {
+        console.warn("Mammoth warnings:", result.messages);
+      }
+    } catch (error) {
+      console.error("Error analyzing file:", error);
+      alert("Có lỗi xảy ra khi phân tích file. Vui lòng thử lại.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
-	const handleClose = () => {
-		handleReset();
-		onClose?.();
-	};
+  const handleSubmit = () => {
+    if (!templateName.trim() || !fileName.trim() || !fileBase64) {
+      alert("Vui lòng điền đầy đủ thông tin và chọn file");
+      return;
+    }
 
-	return (
-		<Modal
-			isOpen={isOpen}
-			onClose={handleClose}
-			size="4xl"
-			scrollBehavior="inside"
-			classNames={{
-				base: "max-h-[90vh]",
-				body: "py-4",
-			}}
-		>
-			<ModalContent>
-				{() => (
-					<>
-						<ModalHeader className="flex flex-col gap-1">
-							<div className="flex items-center gap-2">
-								<UploadIcon />
-								<span>Tải lên biểu mẫu mới</span>
-							</div>
-							<p className="text-sm text-default-500 font-normal">
-								Chọn file .docx để tải lên và hệ thống sẽ tự động phát hiện
-								placeholder
-							</p>
-						</ModalHeader>
-						<ModalBody>
-							<div className="space-y-6">
-								{/* File Upload Section */}
-								<div className="space-y-4">
-									<h4 className="text-lg font-semibold">
-										1. Chọn file biểu mẫu
-									</h4>
-									<div className="flex items-center gap-4">
-										<input
-											ref={fileInputRef}
-											type="file"
-											accept=".docx"
-											onChange={handleFileSelect}
-											className="hidden"
-										/>
-										<Button
-											color="primary"
-											variant="flat"
-											startContent={<UploadIcon />}
-											onPress={() => fileInputRef.current?.click()}
-										>
-											Chọn file .docx
-										</Button>
-										{fileName && (
-											<Chip color="success" variant="flat">
-												{fileName}
-											</Chip>
-										)}
-									</div>
-								</div>
+    const newTemplate = {
+      id: Date.now().toString(),
+      name: templateName,
+      description: "",
+      fileName: fileName,
+      content: content, // HTML for placeholder replacement
+      fileBase64: fileBase64, // Original file for preview
+      placeholders: detectedPlaceholders,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-								{fileName && (
-									<>
-										<Divider />
+    createTemplate(newTemplate, {
+      onSuccess: () => {
+        onSuccess?.();
+        handleReset();
+      },
+      onError: (error) => {
+        console.error("Error creating template:", error);
+        alert("Có lỗi xảy ra khi tạo biểu mẫu");
+      },
+    });
+  };
 
-										{/* Template Info Section */}
-										<div className="space-y-4">
-											<h4 className="text-lg font-semibold">
-												2. Thông tin biểu mẫu
-											</h4>
-											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-												<Input
-													label="Tên biểu mẫu"
-													placeholder="Nhập tên biểu mẫu"
-													value={templateName}
-													onChange={(e) => setTemplateName(e.target.value)}
-													variant="bordered"
-												/>
-												<Input
-													label="Tên file"
-													placeholder="Tên file gốc"
-													value={fileName}
-													onChange={(e) => setFileName(e.target.value)}
-													variant="bordered"
-												/>
-											</div>
-										</div>
+  const handleReset = () => {
+    setTemplateName("");
+    setFileName("");
+    setContent("");
+    setFileBase64("");
+    setDetectedPlaceholders([]);
+    setIsAnalyzing(false);
+    setPreviewError(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    if (previewContainerRef.current) {
+      previewContainerRef.current.innerHTML = "";
+    }
+  };
 
-										<Divider />
+  const handleClose = () => {
+    handleReset();
+    onClose?.();
+  };
 
-										{/* Content Preview Section */}
-										<div className="space-y-4">
-											<h4 className="text-lg font-semibold">
-												3. Nội dung biểu mẫu
-											</h4>
-											{isAnalyzing ? (
-												<Card>
-													<CardBody className="flex items-center justify-center p-8">
-														<div className="text-center">
-															<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-															<p className="text-default-600">
-																Đang phân tích file...
-															</p>
-														</div>
-													</CardBody>
-												</Card>
-											) : (
-												<div className="space-y-4">
-													<Textarea
-														label="Nội dung HTML"
-														placeholder="Nội dung HTML sẽ được tự động trích xuất từ file"
-														value={content}
-														onChange={(e) => setContent(e.target.value)}
-														variant="bordered"
-														minRows={8}
-														maxRows={12}
-														description="Nội dung này đã được chuyển đổi từ file .docx sang HTML"
-													/>
-													{content && (
-														<Card>
-															<CardBody>
-																<h5 className="font-medium text-sm mb-2">
-																	Preview nội dung:
-																</h5>
-																<div
-																	className="prose prose-sm max-w-none border rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto"
-																	dangerouslySetInnerHTML={{
-																		__html: content,
-																	}}
-																/>
-															</CardBody>
-														</Card>
-													)}
-												</div>
-											)}
-										</div>
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="5xl"
+      scrollBehavior="inside"
+      classNames={{
+        base: "max-h-[95vh]",
+        body: "py-4",
+      }}
+    >
+      <ModalContent>
+        {() => (
+          <>
+            <ModalHeader className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <UploadIcon />
+                <span>Tải lên biểu mẫu mới</span>
+              </div>
+              <p className="text-sm text-default-500 font-normal">
+                Chọn file .docx để tải lên và xem preview đúng format gốc
+              </p>
+            </ModalHeader>
+            <ModalBody>
+              <div className="space-y-6">
+                {/* File Upload Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold">
+                    1. Chọn file biểu mẫu
+                  </h4>
+                  <div className="flex items-center gap-4">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".docx"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <Button
+                      color="primary"
+                      variant="flat"
+                      startContent={<UploadIcon />}
+                      onPress={() => fileInputRef.current?.click()}
+                      isLoading={isAnalyzing}
+                    >
+                      {isAnalyzing ? "Đang phân tích..." : "Chọn file .docx"}
+                    </Button>
+                    {fileName && (
+                      <Chip color="success" variant="flat">
+                        {fileName}
+                      </Chip>
+                    )}
+                  </div>
+                </div>
 
-										<Divider />
+                {fileName && !isAnalyzing && (
+                  <>
+                    <Divider />
 
-										{/* Placeholders Section */}
-										<div className="space-y-4">
-											<h4 className="text-lg font-semibold">
-												4. Placeholder được phát hiện
-											</h4>
-											{isAnalyzing ? (
-												<Card>
-													<CardBody className="p-4">
-														<p className="text-default-600">
-															Đang phát hiện placeholder...
-														</p>
-													</CardBody>
-												</Card>
-											) : (
-												<Card>
-													<CardBody className="p-4">
-														{detectedPlaceholders.length > 0 ? (
-															<div className="space-y-3">
-																<p className="text-sm text-default-600">
-																	Tìm thấy {detectedPlaceholders.length}{" "}
-																	placeholder:
-																</p>
-																<div className="flex flex-wrap gap-2">
-																	{detectedPlaceholders.map((placeholder) => (
-																		<Chip
-																			key={placeholder}
-																			color="primary"
-																			variant="flat"
-																			size="sm"
-																		>
-																			{placeholder}
-																		</Chip>
-																	))}
-																</div>
-															</div>
-														) : (
-															<p className="text-default-500">
-																Không tìm thấy placeholder nào. Hãy đảm bảo file
-																chứa các placeholder hợp lệ như{" "}
-																{"{Tên khách hàng}"}, {"{Mã khách hàng}"}, v.v.
-															</p>
-														)}
-													</CardBody>
-												</Card>
-											)}
-										</div>
-									</>
-								)}
-							</div>
-						</ModalBody>
-						<ModalFooter>
-							<Button color="default" variant="light" onPress={handleClose}>
-								Hủy bỏ
-							</Button>
-							<Button
-								color="primary"
-								onPress={handleSubmit}
-								isLoading={isPending}
-								disabled={
-									isPending || isAnalyzing || !fileName || !templateName.trim()
-								}
-							>
-								{isPending ? "Đang tạo..." : "Tạo biểu mẫu"}
-							</Button>
-						</ModalFooter>
-					</>
-				)}
-			</ModalContent>
-		</Modal>
-	);
+                    {/* Template Info Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold">
+                        2. Thông tin biểu mẫu
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          label="Tên biểu mẫu"
+                          placeholder="Nhập tên biểu mẫu"
+                          value={templateName}
+                          onChange={(e) => setTemplateName(e.target.value)}
+                          variant="bordered"
+                        />
+                        <Input
+                          label="Tên file"
+                          placeholder="Tên file gốc"
+                          value={fileName}
+                          isReadOnly
+                          variant="bordered"
+                        />
+                      </div>
+                    </div>
+
+                    <Divider />
+
+                    {/* Placeholders Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold">
+                        3. Placeholder được phát hiện
+                      </h4>
+                      <Card>
+                        <CardBody className="p-4">
+                          {detectedPlaceholders.length > 0 ? (
+                            <div className="space-y-3">
+                              <p className="text-sm text-default-600">
+                                Tìm thấy {detectedPlaceholders.length}{" "}
+                                placeholder:
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {detectedPlaceholders.map((placeholder) => (
+                                  <Chip
+                                    key={placeholder}
+                                    color="primary"
+                                    variant="flat"
+                                    size="sm"
+                                  >
+                                    {placeholder}
+                                  </Chip>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="text-warning-600 font-medium">
+                                ⚠️ Không tìm thấy placeholder nào
+                              </p>
+                              <p className="text-sm text-default-500">
+                                Hãy đảm bảo file chứa các placeholder hợp lệ:{" "}
+                                <code className="text-xs bg-default-100 px-1 rounded">
+                                  {"{Tên khách hàng}"}
+                                </code>
+                                ,{" "}
+                                <code className="text-xs bg-default-100 px-1 rounded">
+                                  {"{Mã khách hàng}"}
+                                </code>
+                                , v.v.
+                              </p>
+                            </div>
+                          )}
+                        </CardBody>
+                      </Card>
+                    </div>
+
+                    <Divider />
+
+                    {/* DOCX Preview Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold">
+                        4. Preview biểu mẫu
+                      </h4>
+                      <Card>
+                        <CardBody className="p-0">
+                          {isPreviewLoading && (
+                            <div className="flex items-center justify-center p-8">
+                              <Spinner size="lg" />
+                              <span className="ml-3">Đang tải preview...</span>
+                            </div>
+                          )}
+
+                          {/* DOCX Preview Container */}
+                          <div
+                            ref={previewContainerRef}
+                            className="docx-preview-container overflow-auto bg-white"
+                            style={{
+                              minHeight:
+                                fileBase64 && !previewError ? "300px" : "0",
+                              maxHeight: "500px",
+                              display: previewError ? "none" : "block",
+                            }}
+                          />
+
+                          {/* Fallback HTML Preview when docx-preview fails */}
+                          {previewError && content && (
+                            <div className="p-4">
+                              <p className="text-sm text-warning-600 mb-3">
+                                ⚠️ Không thể render preview format gốc. Hiển thị
+                                nội dung HTML:
+                              </p>
+                              <div
+                                className="prose prose-sm max-w-none border rounded-lg p-4 bg-gray-50 max-h-[400px] overflow-y-auto"
+                                dangerouslySetInnerHTML={{ __html: content }}
+                              />
+                            </div>
+                          )}
+                        </CardBody>
+                      </Card>
+                    </div>
+                  </>
+                )}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button color="default" variant="light" onPress={handleClose}>
+                Hủy bỏ
+              </Button>
+              <Button
+                color="primary"
+                onPress={handleSubmit}
+                isLoading={isPending}
+                isDisabled={
+                  isPending || isAnalyzing || !fileName || !templateName.trim()
+                }
+              >
+                {isPending ? "Đang tạo..." : "Tạo biểu mẫu"}
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </ModalContent>
+    </Modal>
+  );
 };

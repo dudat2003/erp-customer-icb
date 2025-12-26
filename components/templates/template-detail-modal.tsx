@@ -1,21 +1,21 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
   Chip,
-  Divider,
   Modal,
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
+  Spinner,
   Textarea,
 } from "@heroui/react";
 import { TemplatesIcon } from "@/components/icons/sidebar/templates-icon";
-import { Template } from "@/types";
+import type { Template } from "@/types";
 import { formatDateLong } from "@/lib/dayjs";
 
 interface TemplateDetailModalProps {
@@ -29,6 +29,64 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   onClose,
   template,
 }) => {
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = React.useState(false);
+
+  // Render DOCX preview when template has fileBase64
+  const renderDocxPreview = useCallback(async () => {
+    if (!template?.fileBase64 || !previewContainerRef.current) return;
+
+    setIsPreviewLoading(true);
+    try {
+      // Dynamic import docx-preview
+      const { renderAsync } = await import("docx-preview");
+
+      // Convert base64 to ArrayBuffer
+      const binaryString = atob(template.fileBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const arrayBuffer = bytes.buffer;
+
+      // Clear previous content
+      previewContainerRef.current.innerHTML = "";
+
+      // Render DOCX
+      await renderAsync(arrayBuffer, previewContainerRef.current, undefined, {
+        className: "docx",
+        inWrapper: true,
+        ignoreWidth: false,
+        ignoreHeight: false,
+        ignoreFonts: false,
+        breakPages: true,
+        renderHeaders: true,
+        renderFooters: true,
+        renderFootnotes: true,
+        renderEndnotes: true,
+      });
+    } catch (error) {
+      console.error("Error rendering DOCX preview:", error);
+      if (previewContainerRef.current) {
+        previewContainerRef.current.innerHTML =
+          '<p class="text-red-500 p-4">Không thể hiển thị preview. Vui lòng tải file về để xem.</p>';
+      }
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  }, [template?.fileBase64]);
+
+  // Trigger preview render when modal opens and has fileBase64
+  useEffect(() => {
+    if (isOpen && template?.fileBase64) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        renderDocxPreview();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, template?.fileBase64, renderDocxPreview]);
+
   if (!template) return null;
 
   const handleClose = () => {
@@ -36,24 +94,44 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
   };
 
   const handleDownload = () => {
-    // Mock download functionality
-    const element = document.createElement("a");
-    const file = new Blob([template.content || ""], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = `${template.name}.docx`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    if (template.fileBase64) {
+      // Download original file if we have base64
+      const binaryString = atob(template.fileBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = template.fileName || `${template.name}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      // Fallback to HTML content download
+      const element = document.createElement("a");
+      const file = new Blob([template.content || ""], { type: "text/html" });
+      element.href = URL.createObjectURL(file);
+      element.download = `${template.name}.html`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      size="3xl"
+      size="5xl"
       scrollBehavior="inside"
       classNames={{
-        base: "max-h-[90vh]",
+        base: "max-h-[95vh]",
         body: "py-4",
       }}
     >
@@ -141,16 +219,32 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                     <h4 className="text-lg font-semibold">Nội dung biểu mẫu</h4>
                   </CardHeader>
                   <CardBody>
-                    <Textarea
-                      value={template.content || ""}
-                      variant="bordered"
-                      minRows={15}
-                      maxRows={20}
-                      isReadOnly
-                      classNames={{
-                        input: "font-mono text-sm",
-                      }}
-                    />
+                    {template.fileBase64 ? (
+                      <>
+                        {isPreviewLoading && (
+                          <div className="flex items-center justify-center p-8">
+                            <Spinner size="lg" />
+                            <span className="ml-3">Đang tải preview...</span>
+                          </div>
+                        )}
+                        <div
+                          ref={previewContainerRef}
+                          className="docx-preview-container max-h-[400px] overflow-auto bg-white rounded-lg border"
+                          style={{ minHeight: "200px" }}
+                        />
+                      </>
+                    ) : (
+                      <Textarea
+                        value={template.content || ""}
+                        variant="bordered"
+                        minRows={15}
+                        maxRows={20}
+                        isReadOnly
+                        classNames={{
+                          input: "font-mono text-sm",
+                        }}
+                      />
+                    )}
                   </CardBody>
                 </Card>
               </div>
@@ -160,7 +254,9 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                 Đóng
               </Button>
               <Button color="primary" onPress={handleDownload}>
-                Tải xuống nội dung
+                {template.fileBase64
+                  ? "Tải xuống file gốc"
+                  : "Tải xuống nội dung"}
               </Button>
             </ModalFooter>
           </>

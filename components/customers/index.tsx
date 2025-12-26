@@ -44,6 +44,7 @@ export const Customers = () => {
               mainWrapper: "w-full",
             }}
             placeholder="Tìm kiếm theo tên, mã KH, email..."
+            aria-label="Tìm kiếm khách hàng"
             value={searchTerm}
             onValueChange={setSearchTerm}
             startContent={<SearchIcon />}
@@ -52,6 +53,7 @@ export const Customers = () => {
           />
           <Select
             placeholder="Phân loại"
+            aria-label="Lọc theo phân loại khách hàng"
             className="max-w-xs"
             selectedKeys={categoryFilter ? [categoryFilter] : []}
             onSelectionChange={(keys) => {

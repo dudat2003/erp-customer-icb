@@ -103,9 +103,7 @@ export const StaffTable: React.FC<StaffTableProps> = ({
       case "createdAt":
         return (
           <div className="flex flex-col">
-            <p className="text-sm">
-              {formatDate(staffMember.createdAt)}
-            </p>
+            <p className="text-sm">{formatDate(staffMember.createdAt)}</p>
           </div>
         );
       case "actions":

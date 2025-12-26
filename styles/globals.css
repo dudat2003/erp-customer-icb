@@ -11,3 +11,52 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* docx-preview styles */
+.docx-preview-container {
+  background: white;
+  padding: 10px;
+}
+
+.docx-preview-container .docx-wrapper {
+  background: #f5f5f5;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.docx-preview-container .docx-wrapper > section.docx {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin: 10px auto;
+  padding: 20px 40px;
+  max-width: 100%;
+  min-width: 600px;
+}
+
+.docx-preview-container article {
+  overflow: visible !important;
+}
+
+.docx-preview-container table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.docx-preview-container td,
+.docx-preview-container th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.docx-preview-container p {
+  margin: 0.5em 0;
+  line-height: 1.5;
+}
+
+/* Ensure images scale properly */
+.docx-preview-container img {
+  max-width: 100%;
+  height: auto;
+}

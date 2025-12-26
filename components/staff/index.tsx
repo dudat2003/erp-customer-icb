@@ -52,6 +52,7 @@ export const Staff = () => {
               mainWrapper: "w-full",
             }}
             placeholder="Tìm kiếm nhân viên"
+            aria-label="Tìm kiếm nhân viên"
             value={searchTerm}
             onValueChange={handleSearch}
           />

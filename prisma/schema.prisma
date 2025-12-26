@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Models
@@ -29,14 +30,15 @@ model Customer {
 }
 
 model Template {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  fileName    String?
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String?
+  fileName     String?
   placeholders String[]
-  content     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  content      String?  // HTML content for placeholder replacement
+  fileBase64   String?  // Original .docx file in base64 for preview
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Staff {

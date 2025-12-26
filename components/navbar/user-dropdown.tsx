@@ -7,8 +7,7 @@ import {
   Navbar,
   NavbarItem,
 } from "@heroui/react";
-import React, { useCallback } from "react";
-import { DarkModeSwitch } from "./darkmodeswitch";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { deleteAuthCookie } from "@/actions/auth.action";
 
@@ -27,10 +26,7 @@ export const UserDropdown = () => {
           <Avatar as="button" color="secondary" size="md" />
         </DropdownTrigger>
       </NavbarItem>
-      <DropdownMenu
-        aria-label="User menu actions"
-        onAction={(actionKey) => console.log({ actionKey })}
-      >
+      <DropdownMenu aria-label="User menu actions">
         <DropdownItem
           key="profile"
           className="flex flex-col justify-start w-full items-start"
@@ -42,10 +38,7 @@ export const UserDropdown = () => {
           className="text-danger"
           onPress={handleLogout}
         >
-          Log Out
-        </DropdownItem>
-        <DropdownItem key="switch">
-          <DarkModeSwitch />
+          Đăng xuất
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

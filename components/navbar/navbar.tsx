@@ -1,10 +1,8 @@
-import { Input, Link, Navbar, NavbarContent } from "@heroui/react";
+import { Input, Navbar, NavbarContent } from "@heroui/react";
 import React from "react";
-import { FeedbackIcon } from "../icons/navbar/feedback-icon";
-import { GithubIcon } from "../icons/navbar/github-icon";
-import { SupportIcon } from "../icons/navbar/support-icon";
 import { SearchIcon } from "../icons/searchicon";
 import { BurguerButton } from "./burguer-button";
+import { DarkModeSwitch } from "./darkmodeswitch";
 import { NotificationsDropdown } from "./notifications-dropdown";
 import { UserDropdown } from "./user-dropdown";
 
@@ -39,13 +37,11 @@ export const NavbarWrapper = ({ children }: Props) => {
         </NavbarContent>
         <NavbarContent
           justify="end"
-          className="w-fit data-[justify=end]:flex-grow-0"
+          className="w-fit data-[justify=end]:flex-grow-0 gap-2"
         >
+          <DarkModeSwitch />
           <NotificationsDropdown />
-
-          <NavbarContent>
-            <UserDropdown />
-          </NavbarContent>
+          <UserDropdown />
         </NavbarContent>
       </Navbar>
       {children}

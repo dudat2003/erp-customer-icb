@@ -138,6 +138,40 @@ class ApiClient {
     });
   }
 
+  // Document Generation API
+  async generateDocument(params: {
+    templateId: string;
+    customerId: string;
+    outputFormat?: "json" | "docx";
+  }): Promise<{ success: boolean; docxBase64: string; fileName: string }> {
+    return this.request<{ success: boolean; docxBase64: string; fileName: string }>(
+      "/documents/generate-from-template",
+      {
+        method: "POST",
+        body: JSON.stringify(params),
+      }
+    );
+  }
+
+  async downloadDocument(params: {
+    templateId: string;
+    customerId: string;
+  }): Promise<Blob> {
+    const url = `${this.baseUrl}/documents/generate-from-template`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...params, outputFormat: "docx" }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Không thể tải file");
+    }
+
+    return response.blob();
+  }
+
   // Stats API
   async getDashboardStats(): Promise<any> {
     return this.request<any>("/stats/dashboard");
